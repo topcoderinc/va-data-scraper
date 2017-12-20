@@ -2,7 +2,7 @@
   "dataset_url": "https://www.data.va.gov/data.json",
   "logLevel": "info",
   "dbConfig": {
-    "db_url": "postgres://user:pass@localhost:5432/va"
+    "db_url": "postgres://postgres:pass@localhost:5432/va"
   },
   "downloadPath": "downloads"
 }

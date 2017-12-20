@@ -8,11 +8,15 @@
  * Branch model definition
  */
 module.exports = (sequelize, DataTypes) => sequelize.define('Branch', {
+  id: {
+    type: DataTypes.INTEGER,
+    allowNull: false,
+    primaryKey: true,
+    autoIncrement: true
+  },
   value: {
     type: DataTypes.STRING,
-    allowNull: null,
-    primaryKey: true,
-    unique: true
+    allowNull: false
   }
 }, {
   timestamps: false

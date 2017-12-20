@@ -10,6 +10,7 @@
 const co = require('co');
 const _ = require('lodash');
 const moment = require('moment');
+const ProgressBar = require('ascii-progress');
 const { csvHeaders } = require('../constants');
 const logger = require('../common/logger');
 const {
@@ -28,6 +29,12 @@ const {
  * @param {array} file - The input file
  */
 function* processFile(file) {
+  const bar = new ProgressBar({
+    schema: '[:bar] :percent processed',
+    total: 100
+  });
+  const rowCount = file.length;
+  let processingProgress = 0;
   const totalCount = {
     branches: 0,
     wars: 0,
@@ -35,45 +42,25 @@ function* processFile(file) {
   };
 
   /**
-   * Save ranks recursively
-   * @param {number} index - The index of the rank
-   * @param {array} ranks - The ranks array
+   * Create or update lookup entities
+   * @param {Sequelize model} Model - The sequelize model
+   * @param {array} items - The lookup items array
    * @param {sequelize transaction} t - The sequelize transaction
+   * @returns {array} Array with IDs
    */
-  function* saveRanks(index, ranks, t) {
-    const rank = yield Rank.count({ where: { value: ranks[index].value } });
-    if (rank === 0) yield Rank.create(ranks[index], { transaction: t });
-    return index < ranks.length - 1 ? yield saveRanks(index + 1, ranks, t) : true;
-  }
-
-  /**
-   * Save branches recursively
-   * @param {number} index - the row index
-   * @param {array} branches - The branches array
-   * @param {sequelize transaction} t - The sequelize transaction
-   */
-  function* saveBranches(index, branches, t) {
-    const branchCount = yield Branch.count({ where: { value: branches[index].value } });
-    if (branchCount === 0) {
-      yield Branch.create(branches[index], { transaction: t });
-      totalCount.branches += 1;
+  function* createOrUpdateLookupEntities(Model, items, t) {
+    const ids = [];
+    for (let i = 0; i < items.length; i += 1) {
+      const name = items[i].value.trim();
+      if (name.length > 0) {
+        let entity = yield Model.findOne({ where: { value: items[i].value } }, t);
+        if (!entity) entity = yield Model.create(items[i]);
+        if (_.indexOf(ids, entity.id) < 0) {
+          ids.push(entity.id);
+        }
+      }
     }
-    return index < branches.length - 1 ? yield saveBranches(index + 1, branches, t) : true;
-  }
-
-  /**
-   * Save wars recursively
-   * @param {number} index - the row index
-   * @param {array} wars - The wars array
-   * @param {sequelize transaction} t - The sequelize transaction
-   */
-  function* saveWars(index, wars, t) {
-    const warCount = yield War.count({ where: { value: wars[index].value } });
-    if (warCount === 0) {
-      yield War.create(wars[index], { transaction: t });
-      totalCount.wars += 1;
-    }
-    return index < wars.length - 1 ? yield saveWars(index + 1, wars, t) : true;
+    return ids;
   }
 
   /**
@@ -167,8 +154,8 @@ function* processFile(file) {
               if (_.indexOf(ranks, v) === -1) ranks.push({ value: _.trim(v) });
             }
           });
-          if (ranks.length > 0) yield saveRanks(0, _.uniqBy(ranks, 'value'), t);
-          yield newVeteran.setRanks(_.uniq(_.map(ranks, rank => rank.value)), { transaction: t });
+          const rankIds = yield createOrUpdateLookupEntities(Rank, _.uniqBy(ranks, 'value'), t);
+          yield newVeteran.setRanks(rankIds, { transaction: t });
 
           // Branches
           const branches = [];
@@ -177,8 +164,8 @@ function* processFile(file) {
               if (_.indexOf(branches, v) === -1) branches.push({ value: _.trim(v) });
             }
           });
-          if (branches.length > 0) yield saveBranches(0, _.uniqBy(branches, 'value'), t);
-          yield newVeteran.setBranches(_.uniq(_.map(branches, branch => branch.value)), { transaction: t });
+          const branchIds = yield createOrUpdateLookupEntities(Branch, _.uniqBy(branches, 'value'), t);
+          yield newVeteran.setBranches(branchIds, { transaction: t });
 
           // Wars
           const wars = [];
@@ -187,14 +174,21 @@ function* processFile(file) {
               if (_.indexOf(wars, v) === -1) wars.push({ value: _.trim(v) });
             }
           });
-          if (wars.length > 0) yield saveWars(0, _.uniqBy(wars, 'value'), t);
-          yield newVeteran.setWars(_.uniq(_.map(wars, war => war.value)), { transaction: t });
+          const warIdS = yield createOrUpdateLookupEntities(War, _.uniqBy(wars, 'value'), t);
+          yield newVeteran.setWars(warIdS, { transaction: t });
         } else if (!_.isEqual(veteran.toJSON(), veteranObj)) {
           // Lookup data is not updated as it will never change
           _.extend(veteran, veteranObj);
           yield veteran.save({ transaction: t });
         }
       }));
+    }
+
+    const processedLines = rowCount - file.length;
+    const newProgress = parseInt((100 * processedLines) / rowCount, 10);
+    if (newProgress > processingProgress) {
+      bar.tick(newProgress - processingProgress);
+      processingProgress = newProgress;
     }
     return _.isEmpty(file) ? true : yield processRow();
   }
@@ -244,9 +238,8 @@ function _removeEmpty(obj) {
  */
 function _formatDate(d) {
   if (!d || d.length === 0) return null;
-  const date = moment.utc(d, 'MM/DD/YYYY');
-  if (!date.isValid()) return null;
-  return date.toDate();
+  if (!moment(d, 'MM/DD/YYYY').isValid()) return null;
+  return moment(d, 'MM/DD/YYYY').format('YYYY-MM-DD'); // Convert to format supported by sequelize
 }
 
 module.exports = {

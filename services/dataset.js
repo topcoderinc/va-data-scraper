@@ -57,11 +57,11 @@ function* downloadDataset(url) {
   const csvStr = yield rp(url);
   yield new Promise((resolve, reject) => {
     // Create directory if not exists
-    if (!fs.existsSync(`${__dirname}/../${config.downloadPath}`)) {
-      fs.mkdirSync(`${__dirname}/../${config.downloadPath}`);
+    if (!fs.existsSync(`${config.downloadPath}`)) {
+      fs.mkdirSync(`${config.downloadPath}`);
     }
     // Save file to configured directory
-    fs.writeFile(`${__dirname}/../${config.downloadPath}/${url.split('/')[url.split('/').length - 1]}`, csvStr, (err) => {
+    fs.writeFile(`${config.downloadPath}/${url.split('/')[url.split('/').length - 1]}`, csvStr, (err) => {
       if (err) return reject(err);
       resolve();
     });

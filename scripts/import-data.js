@@ -16,11 +16,9 @@ const datasetService = require('../services/dataset');
 const dataService = require('../services/data');
 const { syncDB } = require('../models');
 
-const downloadPath = `${__dirname}/../${config.downloadPath}/`;
-
 co(function* () {
   yield syncDB();
-  const files = datasetService.getFilenames(downloadPath);
+  const files = datasetService.getFilenames(config.downloadPath);
 
   /**
     * Read each dataset recursively.
@@ -28,7 +26,7 @@ co(function* () {
     */
   function* readfile(index) {
     logger.info(`Processing file: ${files[index]}`);
-    yield dataService.processFile(yield datasetService.readCSV(`${downloadPath}/${files[index]}`));
+    yield dataService.processFile(yield datasetService.readCSV(`${config.downloadPath}/${files[index]}`));
     return index < files.length - 1 ? yield readfile(index + 1) : true;
   }
 

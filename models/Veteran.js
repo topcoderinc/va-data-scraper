@@ -17,8 +17,8 @@ module.exports = (sequelize, DataTypes) => sequelize.define('Veteran', {
   d_first_name: { type: DataTypes.STRING, allowNull: false },
   d_mid_name: DataTypes.STRING,
   d_last_name: { type: DataTypes.STRING, allowNull: false },
-  d_birth_date: { type: DataTypes.DATE, allowNull: false },
-  d_death_date: { type: DataTypes.DATE, allowNull: false },
+  d_birth_date: { type: DataTypes.DATEONLY, allowNull: false },
+  d_death_date: { type: DataTypes.DATEONLY, allowNull: false },
   d_suffix: DataTypes.STRING
 }, {
   timestamps: false

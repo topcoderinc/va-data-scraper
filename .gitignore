@@ -5,10 +5,6 @@ logs
 *.log
 npm-debug.log*
 
-#kyle
-.DS_Store
-*.csv
-
 # Runtime data
 pids
 *.pid
