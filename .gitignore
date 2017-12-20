@@ -4,6 +4,10 @@ node_modules
 logs
 *.log
 npm-debug.log*
+#kyle
+downloads/*.csv
+.DS_Store
+tmp*
 
 # Runtime data
 pids
