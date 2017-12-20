@@ -8,6 +8,7 @@ npm-debug.log*
 downloads/*.csv
 .DS_Store
 tmp*
+config/heroku.json
 
 # Runtime data
 pids

@@ -13,7 +13,9 @@ const config = require('config');
 // initialize database connection
 const sequelize = new Sequelize(config.dbConfig.db_url, {
   logging: config.logLevel === 'debug',
-  operatorsAliases: Sequelize.Op
+  operatorsAliases: Sequelize.Op,
+  native: 'true'
+
 });
 
 // Import models

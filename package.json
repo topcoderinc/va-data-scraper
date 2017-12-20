@@ -23,6 +23,7 @@
     "lodash": "^4.17.4",
     "moment": "^2.20.0",
     "pg": "^7.4.0",
+    "pg-native": "^2.2.0",
     "request": "^2.83.0",
     "request-promise": "^4.2.2",
     "sequelize": "^4.27.0",
