@@ -17,6 +17,7 @@ const dataService = require('../services/data');
 const { syncDB } = require('../models');
 
 co(function* () {
+  logger.info(`connecting to database: ${config.dbConfig.db_url}`);
   yield syncDB();
   const files = datasetService.getFilenames(config.downloadPath);
 
