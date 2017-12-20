@@ -14,7 +14,11 @@ const config = require('config');
 const sequelize = new Sequelize(config.dbConfig.db_url, {
   logging: config.logLevel === 'debug',
   operatorsAliases: Sequelize.Op,
-  native: 'true'
+  native: 'true',
+  dialect: 'postgres',
+  dialectOptions: {
+    ssl: true,
+  },
 
 });
 
